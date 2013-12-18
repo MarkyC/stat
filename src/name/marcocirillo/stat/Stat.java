@@ -178,12 +178,23 @@ public class Stat {
                 "5" // TODO: Make resolution modifiable
         };
 
+        System.out.print("Command: ");
+        for (String s : cmd) {
+            System.out.print(s + " ");
+        }
+
         try {
             Process p = Runtime.getRuntime().exec(cmd);
             p.waitFor();
             OutputStream in = p.getOutputStream();
             if (null == outputFile) {
-                System.setOut(new PrintStream(in));
+                //System.setOut(new PrintStream(in));
+                String line = "";
+                BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                while ((line = input.readLine()) != null) {
+                    System.out.println(line);
+                }
+                input.close();
             } /*else {
 
             }*/
