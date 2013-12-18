@@ -1,9 +1,6 @@
 package name.marcocirillo.stat;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -168,5 +165,33 @@ public class Stat {
         }
 
         return csv;
+    }
+
+    public static List<Stat> collect(File outputFile) throws IOException {
+        // Currently *nix only, as pidstat is required
+        if ((System.getProperty("os.name").contains("Windows")))
+            throw new UnsupportedOperationException("Windows input is not implemented yet.");
+
+        String[] cmd = {
+                "pidstat",
+                "-d", "-r", "-u", "-h",
+                "5" // TODO: Make resolution modifiable
+        };
+
+        try {
+            Process p = Runtime.getRuntime().exec(cmd);
+            p.waitFor();
+            OutputStream in = p.getOutputStream();
+            if (null == outputFile) {
+                System.setOut(new PrintStream(in));
+            } /*else {
+
+            }*/
+        } catch (InterruptedException e) {
+            System.out.println("Collection interrupted.");
+            e.printStackTrace();
+        }
+
+        return null;
     }
 }

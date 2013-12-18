@@ -33,14 +33,13 @@ public class Control {
 
     private static boolean addArg(Arguments key, String val) {
         arguments.put(key, val);
-        System.out.println(val);
         return !((val == null) || (val.length() == 0));
     }
 
     private static boolean parseArgs(String[] args) {
         arguments = new EnumMap<Arguments, String>(Arguments.class);
 
-        for (int i = 0; i < args.length-1; i+=2) {
+        for (int i = 0; i < args.length; i+=2) {
             switch (args[i].charAt(0)) {
                 // We parse arguments by checking for -'s representing the start of an arg
                 case '-':
@@ -53,7 +52,7 @@ public class Control {
                     } else if (s.equals("o")) {
                         if (!addArg(Arguments.OUTPUT, args[i+1])) return false;
                     } else if (s.equals("live")) {
-                        if (!addArg(Arguments.LIVE, args[i+1])) return false;
+                        if (!addArg(Arguments.LIVE, "live")) return false;
                     } else {
                         return false;
                     }
@@ -63,7 +62,6 @@ public class Control {
                    return false;
             }
         }
-
 
         return arguments.containsKey(Arguments.INPUT) || arguments.containsKey(Arguments.LIVE);
     }
@@ -95,14 +93,16 @@ public class Control {
             // Input File Mode
             try {
                 stats = Stat.createFromInput(inputFile);
-            } catch (UnsupportedOperationException unsupported) {
-                unsupported.printStackTrace();
             } catch (Exception e) {
                 e.printStackTrace();
             }
         } else {
             // Live Mode
-            throw new UnsupportedOperationException("Live mode is not implemented yet.");
+            try {
+                stats = Stat.collect(outputFile);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         for (Stat s : stats) {
