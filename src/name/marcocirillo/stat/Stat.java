@@ -172,37 +172,106 @@ public class Stat {
         if ((System.getProperty("os.name").contains("Windows")))
             throw new UnsupportedOperationException("Windows input is not implemented yet.");
 
+        List<Stat> result = new ArrayList<Stat>();
+
         String[] cmd = {
                 "pidstat",
                 "-d", "-r", "-u", "-h",
                 "5" // TODO: Make resolution modifiable
         };
 
-        System.out.print("Command: ");
-        for (String s : cmd) {
-            System.out.print(s + " ");
-        }
-
         try {
             Process p = Runtime.getRuntime().exec(cmd);
-            p.waitFor();
             OutputStream in = p.getOutputStream();
             if (null == outputFile) {
-                //System.setOut(new PrintStream(in));
-                String line = "";
                 BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
-                while ((line = input.readLine()) != null) {
-                    System.out.println(line);
+
+                String line;
+                while(( line = input.readLine() ) != null){
+
+                    // parse data from pidstat output
+                    String[] data = line.split("\\s+");
+                    for (String s : data) System.out.println(s);
+
+                    int time = 0;
+                    try {
+                        time = Integer.parseInt(data[0]);
+                    } catch (NumberFormatException e) {
+                        // Not a number, disregard this line
+                        System.out.println("NaN: " + data[0]);
+                        System.out.println("line: " + line);
+                        continue;
+                    }
+
+                    Stat cpu, ram, hdd;
+                    Stat[] all;
+                    if ((all = hasProcess(result, data[15])) != null) {
+                        System.out.println("has Process");
+
+                        cpu = all[0];
+                        ram = all[1];
+                        hdd = all[2];
+
+                        cpu.addValue(new Date(time), Double.parseDouble(data[5]));
+                        ram.addValue(new Date(time), Double.parseDouble(data[9]));
+                        hdd.addValue(
+                                new Date(time),
+                                Double.parseDouble(data[12]) +
+                                        Double.parseDouble(data[13]) +
+                                        Double.parseDouble(data[14])
+                        );
+
+                    } else {
+                        System.out.println("new stat");
+
+                        cpu = new Stat(data[15], "CPU");
+                        cpu.addValue(new Date(time), Double.parseDouble(data[5]));
+
+                        ram = new Stat(data[15], "RAM");
+                        ram.addValue(new Date(time), Double.parseDouble(data[9]));
+
+                        hdd = new Stat(data[15], "HDD");
+                        hdd.addValue(
+                                new Date(time),
+                                Double.parseDouble(data[12]) +
+                                        Double.parseDouble(data[13]) +
+                                        Double.parseDouble(data[14])
+                        );
+
+
+                        result.add(cpu);
+                        result.add(ram);
+                        result.add(hdd);
+                    }
+
+                    System.out.println(cpu);
+                    System.out.println(ram);
+                    System.out.println(hdd);
                 }
+
                 input.close();
+
+                /*OutputStream outputStream = p.getOutputStream();
+                PrintStream printStream = new PrintStream(outputStream);
+                printStream.println();
+                printStream.flush();
+                printStream.close();*/
             } /*else {
 
             }*/
-        } catch (InterruptedException e) {
+            p.waitFor();
+        } catch (/*Interrupted*/Exception e) {
             System.out.println("Collection interrupted.");
             e.printStackTrace();
         }
 
-        return null;
+        return result;
+    }
+
+    private static Stat[] hasProcess(List<Stat> stats, String processName) {
+        List<Stat> result = new ArrayList<Stat>();
+        for (Stat s : stats) if (s.getProcess().equalsIgnoreCase(processName)) result.add(s);
+
+        return result.size() > 0 ? result.toArray(new Stat[1]) : null ;
     }
 }
