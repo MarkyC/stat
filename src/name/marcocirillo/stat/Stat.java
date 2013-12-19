@@ -191,71 +191,51 @@ public class Stat {
 
                     // parse data from pidstat output
                     String[] data = line.split("\\s+");
-                    for (String s : data) System.out.println(s);
 
                     int time = 0;
                     try {
-                        time = Integer.parseInt(data[0]);
-                    } catch (NumberFormatException e) {
+                        time = Integer.parseInt(data[1]);
+                    } catch (Exception e) {
                         // Not a number, disregard this line
-                        System.out.println("NaN: " + data[0]);
-                        System.out.println("line: " + line);
                         continue;
                     }
 
                     Stat cpu, ram, hdd;
                     Stat[] all;
-                    if ((all = hasProcess(result, data[15])) != null) {
-                        System.out.println("has Process");
+                    if ((all = hasProcess(result, data[16])) != null) {
+                        // Append to existing process
 
                         cpu = all[0];
                         ram = all[1];
                         hdd = all[2];
 
-                        cpu.addValue(new Date(time), Double.parseDouble(data[5]));
-                        ram.addValue(new Date(time), Double.parseDouble(data[9]));
-                        hdd.addValue(
-                                new Date(time),
-                                Double.parseDouble(data[12]) +
-                                        Double.parseDouble(data[13]) +
-                                        Double.parseDouble(data[14])
-                        );
-
                     } else {
-                        System.out.println("new stat");
+                        // create a new Stat for a new process
 
-                        cpu = new Stat(data[15], "CPU");
-                        cpu.addValue(new Date(time), Double.parseDouble(data[5]));
-
-                        ram = new Stat(data[15], "RAM");
-                        ram.addValue(new Date(time), Double.parseDouble(data[9]));
-
-                        hdd = new Stat(data[15], "HDD");
-                        hdd.addValue(
-                                new Date(time),
-                                Double.parseDouble(data[12]) +
-                                        Double.parseDouble(data[13]) +
-                                        Double.parseDouble(data[14])
-                        );
-
+                        cpu = new Stat(data[16], "CPU");
+                        ram = new Stat(data[16], "RAM");
+                        hdd = new Stat(data[16], "HDD");
 
                         result.add(cpu);
                         result.add(ram);
                         result.add(hdd);
                     }
 
-                    System.out.println(cpu);
-                    System.out.println(ram);
-                    System.out.println(hdd);
+                    // Add new Stat values
+                    cpu.addValue(new Date(time), Double.parseDouble(data[6]));
+                    ram.addValue(new Date(time), Double.parseDouble(data[10]));
+                    hdd.addValue(
+                            new Date(time),
+                            Double.parseDouble(data[13]) +
+                                    Double.parseDouble(data[14]) +
+                                    Double.parseDouble(data[15])
+                    );
+
+                    for (Stat s : result) System.out.println(s);
                 }
 
                 input.close();
 
-                /*OutputStream outputStream = p.getOutputStream();
-                PrintStream printStream = new PrintStream(outputStream);
-                printStream.println();
-                printStream.flush();
-                printStream.close();*/
             } /*else {
 
             }*/
