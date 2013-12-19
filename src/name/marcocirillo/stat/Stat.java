@@ -182,7 +182,6 @@ public class Stat {
 
         try {
             Process p = Runtime.getRuntime().exec(cmd);
-            OutputStream in = p.getOutputStream();
             if (null == outputFile) {
                 BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
 
@@ -192,13 +191,17 @@ public class Stat {
                     // parse data from pidstat output
                     String[] data = line.split("\\s+");
 
-                    int time = 0;
-                    try {
-                        time = Integer.parseInt(data[1]);
-                    } catch (Exception e) {
-                        // Not a number, disregard this line
-                        continue;
-                    }
+                    int time;
+
+                    // Valid lines begin with a unix timestamp
+                    /*
+
+#      Time       PID    %usr %system  %guest    %CPU   CPU  minflt/s  majflt/s     VSZ    RSS   %MEM   kB_rd/s   kB_wr/s kB_ccwr/s  Command
+ 1387413246      6934    0.00    0.20    0.00    0.20     1      0.00      0.00   20212    188   0.00     -1.00     -1.00     -1.00  hald-addon-stor
+
+                     */
+                    try { time = Integer.parseInt(data[1]); } catch (Exception e) { continue; }
+
 
                     Stat cpu, ram, hdd;
                     Stat[] all;
